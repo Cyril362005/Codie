@@ -30,20 +30,6 @@ Edit
 ✅ CVE-linked vulnerability scanning (Snyk)  
 ✅ Confidence-based noise filtering
 
----
-
-## 🧠 AI Model Orchestration
-
-Codie uses a **multi-model collaborative AI workflow**:
-
-| Role | AI Tool Used |
-|------|--------------|
-| 🧠 Architect & planner | Gemini Pro |
-| 💬 Frontend UI & APIs | ChatGPT Pro |
-| ⚙️ Backend executor | Grok 4 |
-| 🔍 Research & integrations | Perplexity Pro |
-
----
 
 ## 🧱 System Architecture
 
