@@ -1,0 +1,97 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: codie_db
+    restart: always
+    environment:
+      POSTGRES_USER: codie_user
+      POSTGRES_PASSWORD: codie_pass
+      POSTGRES_DB: codie_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  api_gateway:
+    build: ./api_gateway
+    depends_on:
+      - analysis_orchestrator
+    environment:
+      ANALYSIS_ORCHESTRATOR_URL: http://analysis_orchestrator:8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./shared:/app/shared
+      - ./api_gateway/app:/app/app
+    restart: always
+
+  analysis_orchestrator:
+    build: ./analysis_orchestrator
+    depends_on:
+      - db
+      - repo_analysis
+      - dynamic_testing
+      - chat_service
+      - style_learner
+    environment:
+      DATABASE_URL: postgresql://codie_user:codie_pass@db:5432/codie_db
+      REPO_ANALYSIS_URL: http://repo_analysis:8000/api/v1/parse
+      DYNAMIC_TESTING_URL: http://dynamic_testing:8000/api/v1/execute
+      CHAT_SERVICE_URL: ws://chat_service:8000/ws/analysis_123
+      STYLE_LEARNER_URL: http://style_learner:8000/api/v1/learn-style
+      SNYK_TOKEN: ${SNYK_TOKEN:-} # Reads from .env file or host environment
+      SNYK_ORG_ID: ${SNYK_ORG_ID:-}  # Reads from .env file or host environment
+    volumes:
+      - ./shared:/app/shared
+      - ./analysis_orchestrator/app:/app/app
+    restart: always
+
+  repo_analysis:
+    build: ./repo_analysis
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://codie_user:codie_pass@db:5432/codie_db
+    volumes:
+      - ./shared:/app/shared
+      - ./repo_analysis/app:/app/app
+    restart: always
+
+  dynamic_testing:
+    build: ./dynamic_testing
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://codie_user:codie_pass@db:5432/codie_db
+    volumes:
+      - ./shared:/app/shared
+      - ./dynamic_testing/app:/app/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
+
+  chat_service:
+    build: ./chat_service
+    ports:
+      - "8002:8000"
+    environment:
+      # Replace this value with your actual Hugging Face token
+      HUGGINGFACE_API_TOKEN: HUGGINGFACE_API_KEY "${HUGGINGFACE_API_KEY}"
+
+    volumes:
+      - ./shared:/app/shared
+      - ./chat_service/app:/app/app
+    restart: always
+
+  style_learner:
+    build: ./style_learner
+    ports:
+      - "8003:8000"
+    environment:
+      DATABASE_URL: postgresql://codie_user:codie_pass@db:5432/codie_db
+    volumes:
+      - ./shared:/app/shared
+      - ./style_learner/app:/app/app
+    restart: always
+
+volumes:
+  postgres_data:

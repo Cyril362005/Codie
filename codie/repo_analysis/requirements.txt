@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+pydantic
+tree-sitter
+tree-sitter-languages
+radon
