@@ -24,3 +24,15 @@ codie/*.db
 .vscode/
 .idea/
 
+# Ignore environment variables and secrets
+.env
+*.env
+codie/.env
+codie/.env.local
+codie-chat/.env
+codie-chat/.env.local
+
+# Snyk token and org ID (if stored in files)
+snyk.config.json
+.snyk
+
