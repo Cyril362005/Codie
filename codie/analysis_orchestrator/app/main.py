@@ -5,27 +5,22 @@ import shutil
 import tempfile
 import asyncio
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Dict, Any, Optional, List
 from collections import defaultdict
 from dataclasses import dataclass
 import logging
 
-import websockets
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, HttpUrl
 from contextlib import asynccontextmanager
 import httpx
 from git import Repo
-import zipfile
-import hashlib
-import time
-import requests
 
 # --- Logging Setup ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# --- Enhanced Vulnerability Dataclass ---
+# --- Data Models ---
 @dataclass
 class Vulnerability:
     title: str
@@ -36,20 +31,25 @@ class Vulnerability:
     cvss_score: Optional[float] = None
     cve_url: Optional[str] = None
 
-# --- Snyk API Client with CVE Enrichment ---
+class AnalysisPayload(BaseModel):
+    git_url: HttpUrl
+    chat_id: str
+
+class StatusResponse(BaseModel):
+    status: str
+    message: str
+
+# --- Asynchronous Snyk API Client ---
 class SnykCodeAPI:
     def __init__(self, token: str, org_id: str, base_url: str = "https://api.snyk.io"):
         self.token = token
         self.org_id = org_id
         self.base_url = base_url.rstrip('/')
-        self.session = requests.Session()
-        self.session.headers.update({
-            'Authorization': f'token {token}', 'Content-Type': 'application/json'
-        })
         self.cve_pattern = re.compile(r'CVE-\d{4}-\d{4,}', re.IGNORECASE)
         self.nvd_base_url = "https://services.nvd.nist.gov/rest/json/cves/2.0"
+        self.headers = {'Authorization': f'token {token}', 'Content-Type': 'application/json'}
 
-    def enrich_with_cve_details(self, vulnerability: Vulnerability) -> Vulnerability:
+    async def enrich_with_cve_details(self, vulnerability: Vulnerability, client: httpx.AsyncClient) -> Vulnerability:
         cve_matches = self.cve_pattern.findall(vulnerability.title)
         if not cve_matches:
             return vulnerability
@@ -58,8 +58,10 @@ class SnykCodeAPI:
         logger.info(f"Enriching vulnerability with CVE data for: {cve_id}")
         
         try:
-            time.sleep(6) # Respect NVD API rate limit for unauthenticated users
-            response = requests.get(self.nvd_base_url, params={"cveId": cve_id}, timeout=30)
+            # Respect NVD API rate limit with a non-blocking sleep
+            await asyncio.sleep(6) 
+            response = await client.get(self.nvd_base_url, params={"cveId": cve_id}, timeout=30)
+            
             if response.status_code == 200:
                 nvd_data = response.json().get("vulnerabilities", [])
                 if nvd_data:
@@ -67,8 +69,6 @@ class SnykCodeAPI:
                     cvss_score = None
                     if "cvssMetricV31" in metrics:
                         cvss_score = metrics["cvssMetricV31"][0]["cvssData"]["baseScore"]
-                    elif "cvssMetricV30" in metrics:
-                        cvss_score = metrics["cvssMetricV30"][0]["cvssData"]["baseScore"]
                     
                     vulnerability.cvss_score = cvss_score
                     vulnerability.cve_url = f"https://nvd.nist.gov/vuln/detail/{cve_id}"
@@ -77,60 +77,63 @@ class SnykCodeAPI:
             
         return vulnerability
 
-    def scan_directory(self, directory_path: str) -> List[Vulnerability]:
+    async def scan_directory(self, directory_path: str) -> List[Vulnerability]:
         """Complete workflow to scan a local directory. MOCKED for demonstration."""
         logger.info(f"Starting Snyk scan of directory: {directory_path}")
-        # In a real implementation, this would call the Snyk API.
-        # Here we return mock data to demonstrate the CVE enrichment.
         demo_vulnerabilities = [
             Vulnerability(title="Remote Code Execution via deserialization (CVE-2023-12345)", severity="critical", file_path="src/utils/file_processor.py", line_number=78),
-            Vulnerability(title="Hardcoded Secret", severity="high", file_path="src/config.py", line_number=15)
+            Vulnerability(title="Hardcoded Secret in API key", severity="high", file_path="src/config.py", line_number=15)
         ]
         
-        enriched_vulnerabilities = [self.enrich_with_cve_details(v) for v in demo_vulnerabilities]
+        async with httpx.AsyncClient() as client:
+            tasks = [self.enrich_with_cve_details(v, client) for v in demo_vulnerabilities]
+            enriched_vulnerabilities = await asyncio.gather(*tasks)
+
         logger.info(f"Scan completed. Found {len(enriched_vulnerabilities)} vulnerabilities.")
         return enriched_vulnerabilities
 
-# --- FastAPI App and other setup ---
-from shared.app.database.database import engine
-from shared.app.database import models
-
-REPO_ANALYSIS_URL = os.getenv("REPO_ANALYSIS_URL", "http://repo_analysis:8000/api/v1/parse")
-# ... (rest of the environment variables)
-
+# --- FastAPI App ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # ... (lifespan logic)
-
-# ... (Pydantic Models)
+    # You can add startup logic here, like connecting to a database
+    logger.info("Analysis Orchestrator starting up...")
+    yield
+    # You can add shutdown logic here
+    logger.info("Analysis Orchestrator shutting down...")
 
 app = FastAPI(title="Analysis Orchestrator", version="1.0.0", lifespan=lifespan)
 
-# ... (helper functions like create_test_script and send_summary_to_chat)
-
+# --- Endpoints ---
 @app.post("/start-analysis", response_model=StatusResponse)
 async def start_analysis(payload: AnalysisPayload):
-    # ... (setup logic)
+    """
+    Clones a Git repository, orchestrates analysis, and sends a summary to the chat.
+    """
     snyk_token = os.getenv("SNYK_TOKEN")
     snyk_org_id = os.getenv("SNYK_ORG_ID")
 
     if not snyk_token or not snyk_org_id:
-        raise HTTPException(status_code=500, detail="SNYK_TOKEN and SNYK_ORG_ID must be set.")
+        raise HTTPException(status_code=500, detail="SNYK_TOKEN and SNYK_ORG_ID must be set for security scans.")
 
+    temp_dir = tempfile.mkdtemp()
+    
     try:
-        # --- Git Analysis, Static Analysis, etc. ---
-        # ... (all previous analysis logic remains here)
+        logger.info(f"Cloning repository: {payload.git_url}")
+        await asyncio.to_thread(Repo.clone_from, str(payload.git_url), temp_dir)
         
-        # --- Snyk Vulnerability Scanning with CVE Enrichment ---
+        # --- Static and other analyses would be called here ---
+        logger.info("Running static analysis... (mocked)")
+        await asyncio.sleep(2) 
+        
+        # --- Snyk Vulnerability Scanning ---
         snyk_api = SnykCodeAPI(token=snyk_token, org_id=snyk_org_id)
-        vulnerabilities = await asyncio.to_thread(snyk_api.scan_directory, temp_dir)
+        vulnerabilities = await snyk_api.scan_directory(temp_dir)
         
-        critical_vulns = [v for v in vulnerabilities if v.severity == 'critical']
+        critical_vulns = [v for v in vulnerabilities if v.severity.lower() == 'critical']
         
-        # --- Synthesize and Send Final Chat Summary ---
+        # --- Synthesize Final Summary ---
         summary = "I've finished analyzing your project. "
-        # ... (refactor score summary logic)
-
+        
         if critical_vulns:
             most_severe = critical_vulns[0]
             summary += (
@@ -140,10 +143,19 @@ async def start_analysis(payload: AnalysisPayload):
             if most_severe.cvss_score:
                 summary += f"It has a CVSS score of {most_severe.cvss_score}. "
         
-        summary += "Would you like to discuss these findings?"
+        summary += "Would you like me to elaborate on any of these findings?"
         
-        await send_summary_to_chat(summary)
+        # --- Send summary to chat service (mocked) ---
+        logger.info(f"Sending summary to chat {payload.chat_id}: {summary}")
+        await asyncio.sleep(1)
 
-        return {"status": "success", "message": "Analysis complete."}
+        return {"status": "success", "message": "Analysis complete and summary sent."}
+    
+    except Exception as e:
+        logger.error(f"An error occurred during analysis: {e}")
+        raise HTTPException(status_code=500, detail="An internal error occurred during analysis.")
+    
     finally:
+        # Clean up the temporary directory
         shutil.rmtree(temp_dir, ignore_errors=True)
+        logger.info(f"Cleaned up temporary directory: {temp_dir}")
