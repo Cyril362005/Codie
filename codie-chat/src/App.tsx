@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import Sidebar from './components/Sidebar'
-import DashboardView from './components/DashboardView'
-import ChatPanel from './components/ChatPanel'
 import { ToastProvider, useToast } from './components/ui/Toast'
 import CommandPalette from './components/ui/CommandPalette'
 
-type ViewType = 'dashboard' | 'vulnerabilities' | 'chat'
+const DashboardView = lazy(() => import('./components/DashboardView'));
+const ChatPanel = lazy(() => import('./components/ChatPanel'));
+const IntegrationsView = lazy(() => import('./components/IntegrationsView'));
+
+type ViewType = 'dashboard' | 'vulnerabilities' | 'chat' | 'integrations'
 
 function MainApp() {
   const [currentView, setCurrentView] = useState<ViewType>('dashboard')
@@ -39,6 +41,8 @@ function MainApp() {
         return <DashboardView />
       case 'chat':
         return <ChatPanel />
+      case 'integrations':
+        return <IntegrationsView />
       default:
         return <DashboardView />
     }
@@ -55,7 +59,9 @@ function MainApp() {
         <main className="flex-1 overflow-hidden">
           <div className="h-full p-6">
             <div className="glass h-full overflow-auto animate-fadeIn">
-              {renderMainContent()}
+              <Suspense fallback={<div className="p-6 space-y-4"><div className="h-32 skeleton rounded"/><div className="h-64 skeleton rounded"/></div>}>
+                {renderMainContent()}
+              </Suspense>
             </div>
           </div>
         </main>
