@@ -3,6 +3,13 @@
 @tailwind utilities;
 
 :root {
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
   --electric-blue: #00D4FF;
   --deep-purple: #6C5CE7;
   --neon-green: #00E676;
@@ -12,23 +19,38 @@
   --bg-primary: linear-gradient(135deg, #0F0F0F 0%, #1A1A2E 50%, #16213E 100%);
   --bg-secondary: linear-gradient(135deg, #1E1E2E 0%, #2A2D3A 100%);
 
-  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-bg-1: rgba(255, 255, 255, 0.05);
+  --glass-bg-2: rgba(255, 255, 255, 0.1);
+  --glass-bg-3: rgba(255, 255, 255, 0.15);
   --glass-border: rgba(255, 255, 255, 0.2);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+  --glass-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.2);
+  --glass-shadow-md: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --glass-shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.4);
 }
 
 /* Glassmorphism utilities */
-.glass {
-  background: var(--glass-bg);
+.glass-1 {
+  background: var(--glass-bg-1);
   border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  backdrop-filter: blur(20px);
-  border-radius: 16px;
+  box-shadow: var(--glass-shadow-sm);
+  backdrop-filter: blur(10px);
+  border-radius: var(--space-md);
 }
 
-.glass-elevated {
-  background: rgba(255, 255, 255, 0.12);
+.glass-2 {
+  background: var(--glass-bg-2);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-md);
+  backdrop-filter: blur(20px);
+  border-radius: var(--space-lg);
+}
+
+.glass-3 {
+  background: var(--glass-bg-3);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-lg);
   backdrop-filter: blur(30px);
+  border-radius: var(--space-xl);
 }
 
 /* Skeleton loading */
@@ -74,10 +96,19 @@
   100% { transform: translateY(-100vh) scale(0.5); }
 }
 
-/* Responsive typography */
+/* Typography */
 body {
   font-family: 'Inter', sans-serif;
 }
+
+h1, .h1 { font-size: 2.5rem; font-weight: 800; }
+h2, .h2 { font-size: 2rem; font-weight: 700; }
+h3, .h3 { font-size: 1.75rem; font-weight: 600; }
+h4, .h4 { font-size: 1.5rem; font-weight: 600; }
+h5, .h5 { font-size: 1.25rem; font-weight: 600; }
+h6, .h6 { font-size: 1rem; font-weight: 600; }
+
+
 code, pre {
   font-family: 'JetBrains Mono', monospace;
 }
@@ -95,9 +126,13 @@ code, pre {
 /* Light theme overrides */
 .light {
   --bg-primary: linear-gradient(135deg, #ffffff 0%, #f3f4f6 100%);
-  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-bg-1: rgba(255, 255, 255, 0.5);
+  --glass-bg-2: rgba(255, 255, 255, 0.6);
+  --glass-bg-3: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(0, 0, 0, 0.1);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --glass-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.05);
+  --glass-shadow-md: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --glass-shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.15);
 }
 
 /* Progress ring animation */
