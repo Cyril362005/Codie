@@ -6,20 +6,58 @@ import CommandPalette from './components/ui/CommandPalette'
 const DashboardView = lazy(() => import('./components/DashboardView'));
 const ChatPanel = lazy(() => import('./components/ChatPanel'));
 const IntegrationsView = lazy(() => import('./components/IntegrationsView'));
+const CodeExplorerView = lazy(() => import('./components/CodeExplorerView'));
 
-type ViewType = 'dashboard' | 'vulnerabilities' | 'chat' | 'integrations'
+type ViewType = 'dashboard' | 'vulnerabilities' | 'chat' | 'integrations' | 'code-explorer'
+
+interface AnalysisData {
+  hotspots: Record<string, number>;
+  complexity_reports: Record<string, unknown>;
+  vulnerabilities: Record<string, unknown>[];
+  code_coverage_percentage: number;
+  top_refactoring_candidate: {
+    file: string;
+    score: number;
+  };
+  file_contents: Record<string, string>;
+}
 
 function MainApp() {
   const [currentView, setCurrentView] = useState<ViewType>('dashboard')
-  const [loading, setLoading] = useState(true)
+  const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
   const [paletteOpen, setPaletteOpen] = useState(false)
   const toast = useToast()
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1000)
-    return () => clearTimeout(timer)
-  }, [])
+    const fetchAnalysisData = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/start-analysis', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            git_url: 'https://github.com/jules-ai/codie-sample-app', // Hardcoded for now
+            chat_id: '123'
+          }),
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch analysis data');
+        }
+        const data = await response.json();
+        setAnalysisData(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalysisData();
+  }, []);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -34,17 +72,22 @@ function MainApp() {
 
   const renderMainContent = () => {
     if (loading) return <div className="p-6 space-y-4"><div className="h-32 skeleton rounded"/><div className="h-64 skeleton rounded"/></div>
+    if (error) return <div className="h-full flex items-center justify-center text-danger">{error}</div>;
+    if (!analysisData) return <div className="h-full flex items-center justify-center text-white">No analysis data found.</div>;
+
     switch (currentView) {
       case 'dashboard':
-        return <DashboardView />
+        return <DashboardView analysisData={analysisData} />
       case 'vulnerabilities':
-        return <DashboardView />
+        return <DashboardView analysisData={analysisData} />
       case 'chat':
         return <ChatPanel />
       case 'integrations':
         return <IntegrationsView />
+      case 'code-explorer':
+        return <CodeExplorerView analysisData={analysisData} />
       default:
-        return <DashboardView />
+        return <DashboardView analysisData={analysisData} />
     }
   }
 

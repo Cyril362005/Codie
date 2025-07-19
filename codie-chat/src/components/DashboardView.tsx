@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import AnimatedCard from './AnimatedCard';
 import MetricCard from './MetricCard';
 import VulnerabilityTable from './VulnerabilityTable';
@@ -15,46 +15,11 @@ interface AnalysisData {
   };
 }
 
-const DashboardView: React.FC = () => {
-  const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface DashboardViewProps {
+  analysisData: AnalysisData;
+}
 
-  useEffect(() => {
-    const fetchAnalysisData = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/start-analysis', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            git_url: 'https://github.com/jules-ai/codie-sample-app', // Hardcoded for now
-            chat_id: '123'
-          }),
-        });
-        if (!response.ok) {
-          throw new Error('Failed to fetch analysis data');
-        }
-        const data = await response.json();
-        setAnalysisData(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAnalysisData();
-  }, []);
-
-  if (loading) {
-    return <div className="h-full flex items-center justify-center text-white">Analyzing repository...</div>;
-  }
-
-  if (error) {
-    return <div className="h-full flex items-center justify-center text-danger">{error}</div>;
-  }
+const DashboardView: React.FC<DashboardViewProps> = ({ analysisData }) => {
 
   return (
     <div className="h-full p-lg space-y-lg overflow-auto">
