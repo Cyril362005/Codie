@@ -1,13 +1,22 @@
 import React, { useState } from 'react'
 import MetricCard from './MetricCard'
-import VulnerabilityFeed from './VulnerabilityFeed'
-import ProgressIndicator from './ui/ProgressIndicator'
+import VulnerabilityTable from './VulnerabilityTable'
+import VulnerabilityChart from './VulnerabilityChart'
+import CodePreview from './CodePreview'
 
 const DashboardView: React.FC = () => {
   const [progress, setProgress] = useState(40)
 
+  const codeSnippet = `
+function insecure_deserialization(data) {
+  // Unsafe deserialization of user-provided data
+  const obj = JSON.parse(data);
+  console.log(\`Welcome, \${obj.name}!\`);
+}
+  `;
+
   return (
-    <div className="h-full p-lg space-y-lg">
+    <div className="h-full p-lg space-y-lg overflow-auto">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="h1 text-white mb-xs">Security Dashboard</h1>
@@ -33,17 +42,15 @@ const DashboardView: React.FC = () => {
           <MetricCard label="Avg. Fix Time" value={2} icon={<span>⏱️</span>} colorClass="text-warning" />
         </div>
 
+        <div className="col-span-12">
+          <VulnerabilityTable />
+        </div>
+
         <div className="col-span-12 lg:col-span-8">
-          <div className="glass-1 p-lg flex flex-col space-y-md">
-            <h3 className="h3 text-white">Recent Vulnerabilities</h3>
-            <VulnerabilityFeed />
-          </div>
+          <VulnerabilityChart />
         </div>
         <div className="col-span-12 lg:col-span-4">
-          <div className="glass-1 p-lg flex flex-col space-y-md">
-            <h3 className="h3 text-white">Scan Progress</h3>
-            <ProgressIndicator progress={progress} />
-          </div>
+          <CodePreview code={codeSnippet} language="javascript" />
         </div>
       </div>
     </div>
