@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import AnimatedCard from './AnimatedCard'
 import MetricCard from './MetricCard'
 import VulnerabilityTable from './VulnerabilityTable'
 import VulnerabilityChart from './VulnerabilityChart'
@@ -28,28 +29,36 @@ function insecure_deserialization(data) {
         </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-lg">
-        <div className="col-span-12 lg:col-span-3">
-          <MetricCard label="Total Scans" value={1234} icon={<span>📊</span>} progress={progress} />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-lg">
+        <div className="lg:col-span-3">
+          <AnimatedCard>
+            <MetricCard label="Total Scans" value={1234} icon={<span>📊</span>} progress={progress} />
+          </AnimatedCard>
         </div>
-        <div className="col-span-12 lg:col-span-3">
-          <MetricCard label="Vulnerabilities" value={23} icon={<span>⚠️</span>} colorClass="text-danger" />
+        <div className="lg:col-span-3">
+          <AnimatedCard>
+            <MetricCard label="Vulnerabilities" value={23} icon={<span>⚠️</span>} colorClass="text-danger" />
+          </AnimatedCard>
         </div>
-        <div className="col-span-12 lg:col-span-3">
-          <MetricCard label="Resolved" value={189} icon={<span>✅</span>} colorClass="text-success" progress={80} />
+        <div className="lg:col-span-3">
+          <AnimatedCard>
+            <MetricCard label="Resolved" value={189} icon={<span>✅</span>} colorClass="text-success" progress={80} />
+          </AnimatedCard>
         </div>
-        <div className="col-span-12 lg:col-span-3">
-          <MetricCard label="Avg. Fix Time" value={2} icon={<span>⏱️</span>} colorClass="text-warning" />
+        <div className="lg:col-span-3">
+          <AnimatedCard>
+            <MetricCard label="Avg. Fix Time" value={2} icon={<span>⏱️</span>} colorClass="text-warning" />
+          </AnimatedCard>
         </div>
 
-        <div className="col-span-12">
+        <div className="md:col-span-2 lg:col-span-12">
           <VulnerabilityTable />
         </div>
 
-        <div className="col-span-12 lg:col-span-8">
+        <div className="md:col-span-2 lg:col-span-8">
           <VulnerabilityChart />
         </div>
-        <div className="col-span-12 lg:col-span-4">
+        <div className="md:col-span-2 lg:col-span-4">
           <CodePreview code={codeSnippet} language="javascript" />
         </div>
       </div>
