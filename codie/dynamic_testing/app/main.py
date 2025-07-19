@@ -129,3 +129,6 @@ def generate_java_test(payload: JavaCodePayload):
 @app.get("/")
 def health_check():
     return {"message": "Dynamic Testing Service is running"}
+
+
+    
