@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react'
 import Sidebar from './components/Sidebar'
 import DashboardView from './components/DashboardView'
 import ChatPanel from './components/ChatPanel'
+import IntegrationsView from './components/IntegrationsView'
 import { ToastProvider, useToast } from './components/ui/Toast'
 import CommandPalette from './components/ui/CommandPalette'
 
-type ViewType = 'dashboard' | 'vulnerabilities' | 'chat'
+type ViewType = 'dashboard' | 'vulnerabilities' | 'chat' | 'integrations'
 
 function MainApp() {
   const [currentView, setCurrentView] = useState<ViewType>('dashboard')
@@ -39,6 +40,8 @@ function MainApp() {
         return <DashboardView />
       case 'chat':
         return <ChatPanel />
+      case 'integrations':
+        return <IntegrationsView />
       default:
         return <DashboardView />
     }

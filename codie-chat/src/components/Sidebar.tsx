@@ -2,14 +2,14 @@ import React, { useState } from 'react'
 import DashboardIcon from './icons/DashboardIcon'
 import CodeIcon from './icons/CodeIcon'
 import ShieldIcon from './icons/ShieldIcon'
-import { HiChat } from 'react-icons/hi'
-import Dropdown from './ui/Dropdown'
+import { HiChat, HiOutlinePuzzle } from 'react-icons/hi'
+import ProjectSelector from './ProjectSelector'
 
-type ViewType = 'dashboard' | 'vulnerabilities' | 'chat'
+type ViewType = 'dashboard' | 'vulnerabilities' | 'chat' | 'integrations'
 
 interface SidebarProps {
   currentView: string
-  onViewChange: (view: 'dashboard' | 'vulnerabilities' | 'chat') => void
+  onViewChange: (view: 'dashboard' | 'vulnerabilities' | 'chat' | 'integrations') => void
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
@@ -18,6 +18,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
     { id: 'dashboard', label: 'Dashboard', icon: DashboardIcon, notify: 0 },
     { id: 'vulnerabilities', label: 'Vulnerabilities', icon: ShieldIcon, notify: 3 },
     { id: 'chat', label: 'AI Chat', icon: HiChat, notify: 1 },
+    { id: 'integrations', label: 'Integrations', icon: HiOutlinePuzzle, notify: 0 },
   ]
 
   return (
@@ -60,10 +61,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
 
         <div className="pt-lg">
           {!collapsed && (
-            <Dropdown label="Project">
-              <button className="block w-full text-left px-md py-sm hover:bg-white/5 rounded-md">Project Alpha</button>
-              <button className="block w-full text-left px-md py-sm hover:bg-white/5 rounded-md">Project Beta</button>
-            </Dropdown>
+            <ProjectSelector />
           )}
         </div>
 
