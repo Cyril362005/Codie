@@ -21,24 +21,25 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
   ]
 
   return (
-    <div className={`h-full transition-all duration-300 ${collapsed ? 'w-20' : 'w-64'} bg-gray-900/95 backdrop-blur-xl border-r border-white/10 flex flex-col`}>
-      <div className="p-4 flex-1 flex flex-col">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
-              <CodeIcon className="w-6 h-6 text-white" />
+    <div className={`h-full transition-all duration-300 ${collapsed ? 'w-24' : 'w-64'} glass-2 flex flex-col`}>
+      <div className="p-lg flex-1 flex flex-col">
+        <div className={`flex items-center justify-between mb-xl ${collapsed ? 'px-md' : ''}`}>
+          <div className="flex items-center space-x-sm">
+            <div className="w-8 h-8 bg-gradient-to-br from-accent to-deep-purple rounded-md flex items-center justify-center">
+              <CodeIcon className="w-5 h-5 text-white" />
             </div>
             {!collapsed && (
               <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">Codie</h1>
-                <p className="text-xs text-gray-400">AI Code Reviewer</p>
+                <h1 className="text-lg font-bold bg-gradient-to-r from-accent to-deep-purple bg-clip-text text-transparent">Codie</h1>
               </div>
             )}
           </div>
-          <button className="text-gray-400" onClick={() => setCollapsed((c) => !c)}>{collapsed ? '›' : '‹'}</button>
+          <button className="text-gray-400 hover:text-white" onClick={() => setCollapsed((c) => !c)} style={{minHeight: '44px', minWidth: '44px'}}>
+            {collapsed ? '›' : '‹'}
+          </button>
         </div>
 
-        <nav className="space-y-2 flex-1">
+        <nav className="space-y-sm flex-1">
           {menuItems.map((item) => {
             const Icon = item.icon
             const isActive = currentView === item.id
@@ -46,32 +47,33 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
               <button
                 key={item.id}
                 onClick={() => onViewChange(item.id as ViewType)}
-                className={`relative w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 ${isActive ? 'bg-blue-500/20 text-blue-400 shadow-inner shadow-blue-500/20' : 'hover:bg-white/5 text-gray-300 hover:text-white'}`}
+                className={`relative w-full flex items-center space-x-md px-md rounded-md transition-all duration-200 ${isActive ? 'bg-accent/20 text-accent shadow-inner shadow-accent/20' : 'hover:bg-white/5 text-gray-300 hover:text-white hover:shadow-lg hover:shadow-accent/10'}`}
+                style={{minHeight: '44px'}}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className="w-6 h-6" />
                 {!collapsed && <span className="font-medium flex-1 text-left">{item.label}</span>}
-                {item.notify > 0 && <span className="absolute top-0 right-0 mt-0.5 mr-1 text-xs bg-red-500 rounded-full w-5 h-5 flex items-center justify-center animate-pulse">{item.notify}</span>}
+                {item.notify > 0 && <span className="absolute top-0 right-0 mt-xs mr-xs text-xs bg-danger rounded-full w-5 h-5 flex items-center justify-center animate-pulse">{item.notify}</span>}
               </button>
             )
           })}
         </nav>
 
-        <div className="pt-4">
+        <div className="pt-lg">
           {!collapsed && (
             <Dropdown label="Project">
-              <button className="block w-full text-left px-2 py-1 hover:bg-white/5 rounded">Project Alpha</button>
-              <button className="block w-full text-left px-2 py-1 hover:bg-white/5 rounded">Project Beta</button>
+              <button className="block w-full text-left px-md py-sm hover:bg-white/5 rounded-md">Project Alpha</button>
+              <button className="block w-full text-left px-md py-sm hover:bg-white/5 rounded-md">Project Beta</button>
             </Dropdown>
           )}
         </div>
 
-        <div className="mt-auto pt-8">
-          <div className="glass p-3 flex items-center space-x-3">
+        <div className="mt-auto pt-xl">
+          <div className="glass-1 p-md flex items-center space-x-md">
             <div className="relative">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-deep-purple to-accent rounded-full flex items-center justify-center">
                 <span className="text-white font-semibold">U</span>
               </div>
-              <span className="absolute bottom-0 right-0 block w-2 h-2 bg-green-400 rounded-full"></span>
+              <span className="absolute bottom-0 right-0 block w-2.5 h-2.5 bg-success rounded-full border-2 border-primary"></span>
             </div>
             {!collapsed && (
               <div>
