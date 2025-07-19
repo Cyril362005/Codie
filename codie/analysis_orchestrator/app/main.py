@@ -35,9 +35,12 @@ class AnalysisPayload(BaseModel):
     git_url: HttpUrl
     chat_id: str
 
-class StatusResponse(BaseModel):
-    status: str
-    message: str
+class FullAnalysisResult(BaseModel):
+    hotspots: Dict[str, int]
+    complexity_reports: Dict[str, Any]
+    vulnerabilities: List[Dict]
+    code_coverage_percentage: Optional[float] = None
+    top_refactoring_candidate: Dict[str, Any]
 
 # --- Asynchronous Snyk API Client ---
 class SnykCodeAPI:
@@ -104,7 +107,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Analysis Orchestrator", version="1.0.0", lifespan=lifespan)
 
 # --- Endpoints ---
-@app.post("/start-analysis", response_model=StatusResponse)
+@app.post("/start-analysis", response_model=FullAnalysisResult)
 async def start_analysis(payload: AnalysisPayload):
     """
     Clones a Git repository, orchestrates analysis, and sends a summary to the chat.
@@ -129,27 +132,31 @@ async def start_analysis(payload: AnalysisPayload):
         snyk_api = SnykCodeAPI(token=snyk_token, org_id=snyk_org_id)
         vulnerabilities = await snyk_api.scan_directory(temp_dir)
         
-        critical_vulns = [v for v in vulnerabilities if v.severity.lower() == 'critical']
+        # Mock data for other analysis results
+        hotspots = defaultdict(int)
+        for vuln in vulnerabilities:
+            hotspots[vuln.file_path] += 1
         
-        # --- Synthesize Final Summary ---
-        summary = "I've finished analyzing your project. "
+        complexity_reports = {
+            "src/utils/file_processor.py": {"complexity": 12, "function_lengths": [25, 15]},
+            "src/config.py": {"complexity": 2, "function_lengths": []}
+        }
         
-        if critical_vulns:
-            most_severe = critical_vulns[0]
-            summary += (
-                f"My security scan found {len(critical_vulns)} critical vulnerabilities. "
-                f"The most severe is '{most_severe.title}' in `{most_severe.file_path}`. "
-            )
-            if most_severe.cvss_score:
-                summary += f"It has a CVSS score of {most_severe.cvss_score}. "
+        code_coverage_percentage = 85.5
         
-        summary += "Would you like me to elaborate on any of these findings?"
+        top_candidate_file = "src/utils/file_processor.py"
+        top_score = 0.95
         
-        # --- Send summary to chat service (mocked) ---
-        logger.info(f"Sending summary to chat {payload.chat_id}: {summary}")
-        await asyncio.sleep(1)
-
-        return {"status": "success", "message": "Analysis complete and summary sent."}
+        return {
+            "hotspots": dict(hotspots),
+            "complexity_reports": complexity_reports,
+            "vulnerabilities": [vars(v) for v in vulnerabilities],
+            "code_coverage_percentage": code_coverage_percentage,
+            "top_refactoring_candidate": {
+                "file": top_candidate_file,
+                "score": top_score
+            }
+        }
     
     except Exception as e:
         logger.error(f"An error occurred during analysis: {e}")
