@@ -4,3 +4,6 @@ pydantic
 tree-sitter
 tree-sitter-languages
 radon
+sqlalchemy
+psycopg2-binary
+python-dotenv

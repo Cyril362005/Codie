@@ -10,12 +10,15 @@ WORKDIR /app
 ENV PYTHONPATH=/app
 
 # Copy service-specific code and requirements
-COPY ./app ./app
-COPY ./requirements.txt .
+COPY style_learner/app ./app
+COPY style_learner/requirements.txt .
+COPY shared/requirements.txt ./shared-requirements.txt
+COPY shared/app/database ./app/database
 
 # Install dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r shared-requirements.txt
 
 EXPOSE 8000
 

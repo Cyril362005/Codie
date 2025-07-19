@@ -2,6 +2,7 @@ import httpx
 import os
 from fastapi import FastAPI, Request, HTTPException
 from contextlib import asynccontextmanager
+from fastapi.middleware.cors import CORSMiddleware
 
 ANALYSIS_ORCHESTRATOR_URL = os.getenv("ANALYSIS_ORCHESTRATOR_URL", "http://analysis_orchestrator:8000")
 
@@ -18,6 +19,14 @@ app = FastAPI(
     description="Main entry point for the Codie AI Code Review Assistant.",
     version="1.0.0",
     lifespan=lifespan
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.get("/", tags=["Health Check"])

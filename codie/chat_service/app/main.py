@@ -8,6 +8,7 @@ from typing import Dict, List, Any, Literal
 import httpx
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from pydantic import BaseModel, HttpUrl
+from fastapi.middleware.cors import CORSMiddleware
 
 # --- FastAPI App Initialization ---
 app = FastAPI(title="Codie Chat Service - Final Version")
@@ -18,9 +19,10 @@ HF_API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-I
 # ... (other service URLs)
 
 if not HF_API_TOKEN:
-    raise RuntimeError("Missing HUGGINGFACE_API_TOKEN environment variable.")
-
-headers = {"Authorization": f"Bearer {HF_API_TOKEN}", "Content-Type": "application/json"}
+    print("Warning: HUGGINGFACE_API_TOKEN not set, using mock responses")
+    headers = {"Content-Type": "application/json"}
+else:
+    headers = {"Authorization": f"Bearer {HF_API_TOKEN}", "Content-Type": "application/json"}
 client_history: Dict[str, List[Dict[str, str]]] = {}
 CONFIDENCE_THRESHOLD = 0.5 # Filter responses with less than 50% average confidence
 
@@ -34,6 +36,10 @@ async def fetch_ai_response_with_filtering(prompt: str, max_tokens: int = 400) -
     """
     Fetches AI response and filters it based on a confidence score derived from log probabilities.
     """
+    # If no API token is available, return a mock response
+    if not HF_API_TOKEN:
+        return "This is a mock AI response. Please set HUGGINGFACE_API_TOKEN to enable real AI responses."
+    
     payload = {
         "inputs": prompt,
         "parameters": {
@@ -102,3 +108,11 @@ async def generate_test(request: TestGenRequest):
 @app.get("/")
 def health_check():
     return {"message": "Chat Service is running"}
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)

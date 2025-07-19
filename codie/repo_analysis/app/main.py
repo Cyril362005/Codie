@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from tree_sitter import Node
 from tree_sitter_languages import get_parser
 from radon.visitors import ComplexityVisitor
+from fastapi.middleware.cors import CORSMiddleware
 
 # --- Pydantic Models ---
 class CodePayload(BaseModel):
@@ -17,6 +18,14 @@ class AnalysisResponse(BaseModel):
 app = FastAPI(
     title="Repo Analysis Service",
     description="Parses code to generate a function call graph and measure cyclomatic complexity."
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # --- Helper Functions ---

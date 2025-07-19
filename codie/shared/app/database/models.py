@@ -5,7 +5,8 @@ from sqlalchemy import (
     String,
     DateTime,
     Enum,
-    ForeignKey
+    ForeignKey,
+    Boolean
 )
 from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy.sql import func
@@ -24,12 +25,30 @@ class IssueSeverity(enum.Enum):
     HIGH = "high"
     CRITICAL = "critical"
 
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    username = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    projects = relationship("Project", back_populates="owner")
+
 class Project(Base):
     __tablename__ = "projects"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True, nullable=False)
-    repository_url = Column(String, unique=True, nullable=False)
+    name = Column(String, index=True, nullable=False)
+    repository_url = Column(String, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    owner = relationship("User", back_populates="projects")
     analysis_requests = relationship("AnalysisRequest", back_populates="project")
 
 class AnalysisRequest(Base):

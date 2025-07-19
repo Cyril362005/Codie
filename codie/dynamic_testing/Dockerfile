@@ -24,12 +24,15 @@ WORKDIR /app
 ENV PYTHONPATH=/app
 
 # Copy service-specific code and requirements
-COPY ./app ./app
-COPY ./requirements.txt .
+COPY dynamic_testing/app ./app
+COPY dynamic_testing/requirements.txt .
+COPY shared/requirements.txt ./shared-requirements.txt
+COPY shared/app/database ./app/database
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r shared-requirements.txt
 
 EXPOSE 8000
 

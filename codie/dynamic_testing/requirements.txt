@@ -1,3 +1,7 @@
 fastapi
 uvicorn[standard]
 docker
+pydantic
+sqlalchemy
+psycopg2-binary
+python-dotenv

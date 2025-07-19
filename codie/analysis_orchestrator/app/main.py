@@ -4,6 +4,8 @@ import json
 import shutil
 import tempfile
 import asyncio
+import time
+import random
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from collections import defaultdict
@@ -15,6 +17,7 @@ from pydantic import BaseModel, HttpUrl
 from contextlib import asynccontextmanager
 import httpx
 from git import Repo
+from fastapi.middleware.cors import CORSMiddleware
 
 # --- Logging Setup ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -48,6 +51,37 @@ class FullAnalysisResult(BaseModel):
     top_refactoring_candidate: Dict[str, Any]
     file_contents: Dict[str, str]
     repo_path: str
+
+# --- Pydantic Schemas ---
+class FullAnalysisResult(BaseModel):
+    hotspots: Dict[str, int]
+    complexity_reports: Dict[str, Any]
+    vulnerabilities: List[Dict]  # We'll pass the dict representation of the Vulnerability dataclass
+    code_coverage_percentage: Optional[float] = None
+    top_refactoring_candidate: Dict[str, Any]
+    file_contents: Dict[str, str]
+
+class ApplyFixRequest(BaseModel):
+    repo_path: str
+    file_path: str
+    new_code: str
+
+class ApplyFixResponse(BaseModel):
+    success: bool
+    message: str
+    file_path: str
+
+class ReportRequest(BaseModel):
+    project_id: str
+    template: str
+    sections: Dict[str, bool]
+    format: str = "pdf"  # pdf, html, json
+
+class ReportResponse(BaseModel):
+    report_id: str
+    status: str
+    download_url: Optional[str] = None
+    message: str
 
 # --- Asynchronous Snyk API Client ---
 class SnykCodeAPI:
@@ -112,6 +146,13 @@ async def lifespan(app: FastAPI):
     logger.info("Analysis Orchestrator shutting down...")
 
 app = FastAPI(title="Analysis Orchestrator", version="1.0.0", lifespan=lifespan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # --- Endpoints ---
 @app.post("/start-analysis", response_model=FullAnalysisResult)
@@ -119,12 +160,6 @@ async def start_analysis(payload: AnalysisPayload):
     """
     Clones a Git repository, orchestrates analysis, and sends a summary to the chat.
     """
-    snyk_token = os.getenv("SNYK_TOKEN")
-    snyk_org_id = os.getenv("SNYK_ORG_ID")
-
-    if not snyk_token or not snyk_org_id:
-        raise HTTPException(status_code=500, detail="SNYK_TOKEN and SNYK_ORG_ID must be set for security scans.")
-
     temp_dir = tempfile.mkdtemp()
     
     try:
@@ -136,18 +171,76 @@ async def start_analysis(payload: AnalysisPayload):
         await asyncio.sleep(2) 
         
         # --- Snyk Vulnerability Scanning ---
-        snyk_api = SnykCodeAPI(token=snyk_token, org_id=snyk_org_id)
-        vulnerabilities = await snyk_api.scan_directory(temp_dir)
+        snyk_token = os.getenv("SNYK_TOKEN")
+        snyk_org_id = os.getenv("SNYK_ORG_ID")
+
+        if not snyk_token or not snyk_org_id:
+            logger.warning("SNYK_TOKEN and SNYK_ORG_ID not set, using mock security scan")
+            # Use mock vulnerabilities instead of real Snyk scan
+            vulnerabilities = [
+                Vulnerability(title="Mock: Remote Code Execution via deserialization", severity="critical", file_path="src/utils/file_processor.py", line_number=78),
+                Vulnerability(title="Mock: Hardcoded Secret in API key", severity="high", file_path="src/config.py", line_number=15)
+            ]
+        else:
+            # --- Snyk Vulnerability Scanning ---
+            snyk_api = SnykCodeAPI(token=snyk_token, org_id=snyk_org_id)
+            vulnerabilities = await snyk_api.scan_directory(temp_dir)
         
         # Mock data for other analysis results
         hotspots = defaultdict(int)
         for vuln in vulnerabilities:
             hotspots[vuln.file_path] += 1
         
+<<<<<<< Updated upstream
         complexity_reports = {
             "src/utils/file_processor.py": {"complexity": 12, "function_lengths": [25, 15]},
             "src/config.py": {"complexity": 2, "function_lengths": []}
         }
+=======
+        # --- Collect File Contents ---
+        file_contents = {}
+        for root, dirs, files in os.walk(temp_dir):
+            for file in files:
+                if file.endswith(('.py', '.js', '.ts', '.tsx', '.jsx', '.java', '.cpp', '.c', '.h', '.hpp')):
+                    file_path = os.path.join(root, file)
+                    rel_path = os.path.relpath(file_path, temp_dir)
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            file_contents[rel_path] = f.read()
+                    except Exception as e:
+                        logger.warning(f"Could not read file {rel_path}: {e}")
+        
+        # --- Generate Mock Analysis Data ---
+        hotspots = {
+            "src/utils/file_processor.py": 15,
+            "src/config.py": 8,
+            "src/api/routes.py": 12,
+            "src/database/models.py": 6
+        }
+        
+        complexity_reports = {
+            "src/utils/file_processor.py": {
+                "cyclomatic_complexity": 15,
+                "cognitive_complexity": 12,
+                "maintainability_index": 45
+            },
+            "src/config.py": {
+                "cyclomatic_complexity": 8,
+                "cognitive_complexity": 6,
+                "maintainability_index": 65
+            }
+        }
+        
+        # Mock code coverage data
+        code_coverage_percentage = 78.5
+        
+        # Determine top refactoring candidate
+        top_candidate_file = "src/utils/file_processor.py"
+        top_score = complexity_reports[top_candidate_file]["cyclomatic_complexity"]
+        
+        # --- Synthesize Final Summary ---
+        summary = "I've finished analyzing your project. "
+>>>>>>> Stashed changes
         
         code_coverage_percentage = 85.5
         
@@ -167,7 +260,11 @@ async def start_analysis(payload: AnalysisPayload):
                         pass
 
         return {
+<<<<<<< Updated upstream
             "hotspots": dict(hotspots),
+=======
+            "hotspots": hotspots,
+>>>>>>> Stashed changes
             "complexity_reports": complexity_reports,
             "vulnerabilities": [vars(v) for v in vulnerabilities],
             "code_coverage_percentage": code_coverage_percentage,
@@ -175,8 +272,12 @@ async def start_analysis(payload: AnalysisPayload):
                 "file": top_candidate_file,
                 "score": top_score
             },
+<<<<<<< Updated upstream
             "file_contents": file_contents,
             "repo_path": temp_dir
+=======
+            "file_contents": file_contents
+>>>>>>> Stashed changes
         }
     
     except Exception as e:
@@ -188,6 +289,7 @@ async def start_analysis(payload: AnalysisPayload):
         shutil.rmtree(temp_dir, ignore_errors=True)
         logger.info(f"Cleaned up temporary directory: {temp_dir}")
 
+<<<<<<< Updated upstream
 @app.post("/api/v1/apply-fix")
 async def apply_fix(payload: ApplyFixPayload):
     """
@@ -208,3 +310,103 @@ async def apply_fix(payload: ApplyFixPayload):
     except Exception as e:
         logger.error(f"An error occurred while applying fix: {e}")
         raise HTTPException(status_code=500, detail="An internal error occurred while applying fix.")
+=======
+@app.post("/api/v1/apply-fix", response_model=ApplyFixResponse)
+async def apply_fix(request: ApplyFixRequest):
+    """
+    Apply a code fix by overwriting a file with new code.
+    """
+    try:
+        # Validate that the repository path exists
+        if not os.path.exists(request.repo_path):
+            raise HTTPException(status_code=404, detail="Repository path not found")
+        
+        # Construct the full file path
+        full_file_path = os.path.join(request.repo_path, request.file_path)
+        
+        # Validate that the file exists
+        if not os.path.exists(full_file_path):
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        # Create a backup of the original file
+        backup_path = f"{full_file_path}.backup"
+        shutil.copy2(full_file_path, backup_path)
+        logger.info(f"Created backup of {full_file_path} at {backup_path}")
+        
+        # Write the new code to the file
+        with open(full_file_path, 'w', encoding='utf-8') as f:
+            f.write(request.new_code)
+        
+        logger.info(f"Successfully applied fix to {request.file_path}")
+        
+        return ApplyFixResponse(
+            success=True,
+            message=f"Successfully applied fix to {request.file_path}",
+            file_path=request.file_path
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to apply fix: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to apply fix: {str(e)}")
+
+@app.post("/api/v1/generate-report", response_model=ReportResponse)
+async def generate_report(request: ReportRequest):
+    """
+    Generate a comprehensive analysis report for a project.
+    """
+    try:
+        # Generate a unique report ID
+        report_id = f"report_{int(time.time())}_{random.randint(1000, 9999)}"
+        
+        # Mock report generation process
+        logger.info(f"Generating report {report_id} for project {request.project_id}")
+        
+        # In a real implementation, this would:
+        # 1. Fetch project data from database
+        # 2. Generate report content based on template and sections
+        # 3. Convert to requested format (PDF, HTML, JSON)
+        # 4. Store report file and return download URL
+        
+        # For now, we'll simulate the process
+        await asyncio.sleep(2)  # Simulate processing time
+        
+        # Mock download URL
+        download_url = f"http://localhost:8001/api/v1/reports/{report_id}/download"
+        
+        logger.info(f"Report {report_id} generated successfully")
+        
+        return ReportResponse(
+            report_id=report_id,
+            status="completed",
+            download_url=download_url,
+            message=f"Report generated successfully. Download available at {download_url}"
+        )
+        
+    except Exception as e:
+        logger.error(f"Failed to generate report: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate report: {str(e)}")
+
+@app.get("/api/v1/reports/{report_id}/download")
+async def download_report(report_id: str):
+    """
+    Download a generated report.
+    """
+    try:
+        # In a real implementation, this would:
+        # 1. Validate report_id
+        # 2. Check if report exists and is completed
+        # 3. Return the actual report file
+        
+        # For now, return a mock response
+        return {
+            "report_id": report_id,
+            "status": "available",
+            "message": "Report download endpoint - file would be served here"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to download report {report_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to download report: {str(e)}")
+>>>>>>> Stashed changes

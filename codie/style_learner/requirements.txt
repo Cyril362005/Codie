@@ -2,3 +2,7 @@ fastapi
 uvicorn
 tree-sitter-languages
 GitPython
+pydantic
+sqlalchemy
+psycopg2-binary
+python-dotenv

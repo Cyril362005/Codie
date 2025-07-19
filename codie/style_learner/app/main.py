@@ -8,11 +8,20 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, HttpUrl
 from tree_sitter_languages import get_parser
 from git import Repo
+from fastapi.middleware.cors import CORSMiddleware
 
 # --- FastAPI App Initialization ---
 app = FastAPI(
     title="Style Learner Service",
     description="Analyzes code style by counting common identifiers in a repository.",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # --- Pydantic Models ---
