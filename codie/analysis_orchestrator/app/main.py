@@ -35,6 +35,11 @@ class AnalysisPayload(BaseModel):
     git_url: HttpUrl
     chat_id: str
 
+class ApplyFixPayload(BaseModel):
+    repo_path: str
+    file_path: str
+    new_code: str
+
 class FullAnalysisResult(BaseModel):
     hotspots: Dict[str, int]
     complexity_reports: Dict[str, Any]
@@ -42,6 +47,7 @@ class FullAnalysisResult(BaseModel):
     code_coverage_percentage: Optional[float] = None
     top_refactoring_candidate: Dict[str, Any]
     file_contents: Dict[str, str]
+    repo_path: str
 
 # --- Asynchronous Snyk API Client ---
 class SnykCodeAPI:
@@ -169,7 +175,8 @@ async def start_analysis(payload: AnalysisPayload):
                 "file": top_candidate_file,
                 "score": top_score
             },
-            "file_contents": file_contents
+            "file_contents": file_contents,
+            "repo_path": temp_dir
         }
     
     except Exception as e:
@@ -180,3 +187,24 @@ async def start_analysis(payload: AnalysisPayload):
         # Clean up the temporary directory
         shutil.rmtree(temp_dir, ignore_errors=True)
         logger.info(f"Cleaned up temporary directory: {temp_dir}")
+
+@app.post("/api/v1/apply-fix")
+async def apply_fix(payload: ApplyFixPayload):
+    """
+    Applies a fix to a file in a cloned repository.
+    """
+    try:
+        # Sanitize the file path to prevent directory traversal
+        repo_path = Path(payload.repo_path).resolve()
+        file_path = (repo_path / payload.file_path).resolve()
+
+        if not file_path.is_relative_to(repo_path):
+            raise HTTPException(status_code=400, detail="Invalid file path")
+
+        with open(file_path, "w") as f:
+            f.write(payload.new_code)
+
+        return {"status": "success", "message": f"Successfully applied fix to {payload.file_path}"}
+    except Exception as e:
+        logger.error(f"An error occurred while applying fix: {e}")
+        raise HTTPException(status_code=500, detail="An internal error occurred while applying fix.")

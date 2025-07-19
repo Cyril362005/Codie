@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiCopy, FiThumbsUp, FiThumbsDown } from 'react-icons/fi';
+import { FiCopy, FiThumbsUp, FiThumbsDown, FiZap } from 'react-icons/fi';
 import CodePreview from './CodePreview';
 
 interface Message {
@@ -11,15 +11,21 @@ interface Message {
     thumbsDown: number;
   };
   code?: string;
+  file_path?: string;
 }
 
-const ChatPanel: React.FC = () => {
+interface ChatPanelProps {
+  repo_path: string;
+}
+
+const ChatPanel: React.FC<ChatPanelProps> = ({ repo_path }) => {
   const [messages, setMessages] = useState<Message[]>([
     { id: 1, text: "Show me an example of a SQL injection vulnerability.", from: 'user' },
     {
       id: 2,
       text: "Certainly. Here is a classic example of a SQL injection vulnerability in a Node.js application:",
       from: 'ai',
+      file_path: 'src/vulnerable.js',
       code: `
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
@@ -61,6 +67,29 @@ app.post('/login', (req, res) => {
     navigator.clipboard.writeText(text);
   };
 
+  const applyFix = async (file_path: string, new_code: string) => {
+    try {
+      const response = await fetch('http://localhost:8000/api/v1/apply-fix', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          repo_path,
+          file_path,
+          new_code,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to apply fix');
+      }
+      // You could add a success message to the chat here
+    } catch (error) {
+      console.error(error);
+      // You could add an error message to the chat here
+    }
+  };
+
   return (
     <div className="flex flex-col h-full p-lg">
       <div className="flex-1 overflow-y-auto space-y-lg pr-md">
@@ -79,6 +108,7 @@ app.post('/login', (req, res) => {
                 <button onClick={() => handleReaction(m.id, 'thumbsUp')} className="text-gray-400 hover:text-success"><FiThumbsUp /></button>
                 <button onClick={() => handleReaction(m.id, 'thumbsDown')} className="text-gray-400 hover:text-danger"><FiThumbsDown /></button>
                 {m.code && <button onClick={() => copyToClipboard(m.code!)} className="text-gray-400 hover:text-accent"><FiCopy /></button>}
+                {m.code && m.file_path && <button onClick={() => applyFix(m.file_path!, m.code!)} className="text-gray-400 hover:text-accent"><FiZap /></button>}
               </div>
             )}
           </div>

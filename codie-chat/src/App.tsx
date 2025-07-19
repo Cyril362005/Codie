@@ -20,6 +20,7 @@ interface AnalysisData {
     score: number;
   };
   file_contents: Record<string, string>;
+  repo_path: string;
 }
 
 function MainApp() {
@@ -81,7 +82,7 @@ function MainApp() {
       case 'vulnerabilities':
         return <DashboardView analysisData={analysisData} />
       case 'chat':
-        return <ChatPanel />
+        return <ChatPanel repo_path={analysisData.repo_path} />
       case 'integrations':
         return <IntegrationsView />
       case 'code-explorer':
