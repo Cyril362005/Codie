@@ -5,11 +5,11 @@ import ShieldIcon from './icons/ShieldIcon'
 import { HiChat, HiOutlinePuzzle } from 'react-icons/hi'
 import ProjectSelector from './ProjectSelector'
 
-type ViewType = 'dashboard' | 'vulnerabilities' | 'chat' | 'integrations'
+type ViewType = 'dashboard' | 'vulnerabilities' | 'chat' | 'integrations' | 'code-explorer'
 
 interface SidebarProps {
   currentView: string
-  onViewChange: (view: 'dashboard' | 'vulnerabilities' | 'chat' | 'integrations') => void
+  onViewChange: (view: 'dashboard' | 'vulnerabilities' | 'chat' | 'integrations' | 'code-explorer') => void
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
@@ -17,6 +17,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: DashboardIcon, notify: 0 },
     { id: 'vulnerabilities', label: 'Vulnerabilities', icon: ShieldIcon, notify: 3 },
+    { id: 'code-explorer', label: 'Code Explorer', icon: CodeIcon, notify: 0 },
     { id: 'chat', label: 'AI Chat', icon: HiChat, notify: 1 },
     { id: 'integrations', label: 'Integrations', icon: HiOutlinePuzzle, notify: 0 },
   ]

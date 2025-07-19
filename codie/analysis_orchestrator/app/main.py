@@ -41,6 +41,7 @@ class FullAnalysisResult(BaseModel):
     vulnerabilities: List[Dict]
     code_coverage_percentage: Optional[float] = None
     top_refactoring_candidate: Dict[str, Any]
+    file_contents: Dict[str, str]
 
 # --- Asynchronous Snyk API Client ---
 class SnykCodeAPI:
@@ -147,6 +148,18 @@ async def start_analysis(payload: AnalysisPayload):
         top_candidate_file = "src/utils/file_processor.py"
         top_score = 0.95
         
+        file_contents = {}
+        for root, _, files in os.walk(temp_dir):
+            for file in files:
+                if not ".git" in root:
+                    try:
+                        file_path = Path(root) / file
+                        relative_path = file_path.relative_to(temp_dir)
+                        file_contents[str(relative_path)] = file_path.read_text()
+                    except Exception:
+                        # Ignore files that can't be read
+                        pass
+
         return {
             "hotspots": dict(hotspots),
             "complexity_reports": complexity_reports,
@@ -155,7 +168,8 @@ async def start_analysis(payload: AnalysisPayload):
             "top_refactoring_candidate": {
                 "file": top_candidate_file,
                 "score": top_score
-            }
+            },
+            "file_contents": file_contents
         }
     
     except Exception as e:
