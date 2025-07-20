@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/useAuth';
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 
 interface LoginFormProps {

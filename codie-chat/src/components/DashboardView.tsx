@@ -1,60 +1,18 @@
-<<<<<<< Updated upstream
-import React from 'react';
-import AnimatedCard from './AnimatedCard';
-import MetricCard from './MetricCard';
-import VulnerabilityTable from './VulnerabilityTable';
-import VulnerabilityChart from './VulnerabilityChart';
-
-interface AnalysisData {
-  hotspots: Record<string, number>;
-  complexity_reports: Record<string, unknown>;
-  vulnerabilities: Record<string, unknown>[];
-  code_coverage_percentage: number;
-  top_refactoring_candidate: {
-    file: string;
-    score: number;
-  };
-}
-
-interface DashboardViewProps {
-  analysisData: AnalysisData;
-}
-
-const DashboardView: React.FC<DashboardViewProps> = ({ analysisData }) => {
-=======
 import React, { useState, useEffect } from 'react'
 import VulnerabilityTable from './VulnerabilityTable'
 import VulnerabilityChart from './VulnerabilityChart'
 import { FiRefreshCw, FiPlus, FiTrendingUp, FiTrendingDown, FiShield, FiCode, FiAlertTriangle, FiCheckCircle } from 'react-icons/fi'
 import { analysisAPI, monitoringAPI } from '../services/api'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/useAuth'
 
-interface AnalysisData {
-  hotspots: Record<string, number>
-  complexity_reports: Record<string, any>
-  vulnerabilities: Array<{
-    title: string
-    severity: string
-    file_path: string
-    line_number?: number
-    description?: string
-    cvss_score?: number
-    cve_url?: string
-  }>
-  code_coverage_percentage?: number
-  top_refactoring_candidate: {
-    file: string
-    score: number
-  }
-  file_contents: Record<string, string>
-}
+import { AnalysisData } from '../types';
 
 const DashboardView: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null)
   const [progress, setProgress] = useState(0)
-  const [systemHealth, setSystemHealth] = useState<any>(null)
+  const [systemHealth, setSystemHealth] = useState<unknown | null>(null)
   const { token } = useAuth()
 
   useEffect(() => {
@@ -184,7 +142,6 @@ const DashboardView: React.FC = () => {
   // Get top refactoring candidate code
   const topCandidateCode = analysisData.file_contents[analysisData.top_refactoring_candidate.file] || 
     '// Code preview not available'
->>>>>>> Stashed changes
 
   return (
     <div className="h-full p-6 space-y-6 overflow-auto gradient-bg">
@@ -202,42 +159,6 @@ const DashboardView: React.FC = () => {
             </div>
           )}
         </div>
-<<<<<<< Updated upstream
-      </div>
-
-      {analysisData && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-lg">
-          <div className="lg:col-span-3">
-            <AnimatedCard>
-              <MetricCard label="Vulnerabilities" value={analysisData.vulnerabilities.length} icon={<span>⚠️</span>} colorClass="text-danger" />
-            </AnimatedCard>
-          </div>
-          <div className="lg:col-span-3">
-            <AnimatedCard>
-              <MetricCard label="Hotspots" value={Object.keys(analysisData.hotspots).length} icon={<span>🔥</span>} colorClass="text-warning" />
-            </AnimatedCard>
-          </div>
-          <div className="lg:col-span-3">
-            <AnimatedCard>
-              <MetricCard label="Code Coverage" value={`${analysisData.code_coverage_percentage}%`} icon={<span>🎯</span>} colorClass="text-success" />
-            </AnimatedCard>
-          </div>
-          <div className="lg:col-span-3">
-            <AnimatedCard>
-              <MetricCard label="Top Refactoring" value={analysisData.top_refactoring_candidate.file} icon={<span>🔧</span>} />
-            </AnimatedCard>
-          </div>
-
-          <div className="md:col-span-2 lg:col-span-12">
-            <VulnerabilityTable vulnerabilities={analysisData.vulnerabilities} />
-          </div>
-
-          <div className="md:col-span-2 lg:col-span-12">
-            <VulnerabilityChart />
-          </div>
-        </div>
-      )}
-=======
         <div className="flex space-x-3">
           <button 
             onClick={handleRefresh}
@@ -377,7 +298,6 @@ const DashboardView: React.FC = () => {
         </div>
         <VulnerabilityTable vulnerabilities={analysisData.vulnerabilities.slice(0, 5)} />
       </div>
->>>>>>> Stashed changes
     </div>
   );
 };

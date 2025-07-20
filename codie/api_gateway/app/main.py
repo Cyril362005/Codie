@@ -48,4 +48,10 @@ async def proxy_start_analysis(request: Request):
     except httpx.RequestError as exc:
         raise HTTPException(status_code=503, detail=f"Error communicating with the Analysis Orchestrator: {exc}")
     except httpx.HTTPStatusError as exc:
-        raise HTTPException(status_code=exc.response.status_code, detail=exc.response.json())
+        try:
+            detail = exc.response.json()
+        except ValueError:
+            detail = exc.response.text
+        raise HTTPException(status_code=exc.response.status_code, detail=detail)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {exc}")

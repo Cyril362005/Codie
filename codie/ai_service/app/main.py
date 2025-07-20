@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 import logging
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 
 from .advanced_ai import (
     AdvancedAIService, 
@@ -63,7 +63,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "ai-service",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "models_loaded": {
             "vulnerability_classifier": ai_service.vulnerability_classifier is not None,
             "code_quality_regressor": ai_service.code_quality_regressor is not None,
@@ -102,7 +102,7 @@ async def analyze_code(request: CodeAnalysisRequest):
             vulnerability_prediction=vulnerability_prediction,
             code_quality=code_quality,
             patterns=patterns,
-            analysis_timestamp=datetime.utcnow()
+            analysis_timestamp=datetime.now(timezone.utc)
         )
         
     except Exception as e:

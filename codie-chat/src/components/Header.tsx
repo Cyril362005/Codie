@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FiBell, FiSearch, FiSettings, FiHelpCircle, FiSun, FiMoon, FiMenu } from 'react-icons/fi';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/useAuth';
 
 interface HeaderProps {
   title: string;

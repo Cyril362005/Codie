@@ -3,36 +3,13 @@ import Sidebar from './components/Sidebar'
 import { ToastProvider } from './components/ui/Toast'
 import CommandPalette from './components/ui/CommandPalette'
 import AuthPage from './components/auth/AuthPage'
-import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { AuthProvider } from './contexts/AuthProvider'
+import { useAuth } from './contexts/useAuth'
 
 const DashboardView = lazy(() => import('./components/DashboardView'));
 const ChatPanel = lazy(() => import('./components/ChatPanel'));
 const IntegrationsView = lazy(() => import('./components/IntegrationsView'));
 const CodeExplorerView = lazy(() => import('./components/CodeExplorerView'));
-<<<<<<< Updated upstream
-
-type ViewType = 'dashboard' | 'vulnerabilities' | 'chat' | 'integrations' | 'code-explorer'
-
-interface AnalysisData {
-  hotspots: Record<string, number>;
-  complexity_reports: Record<string, unknown>;
-  vulnerabilities: Record<string, unknown>[];
-  code_coverage_percentage: number;
-  top_refactoring_candidate: {
-    file: string;
-    score: number;
-  };
-  file_contents: Record<string, string>;
-  repo_path: string;
-}
-
-function MainApp() {
-  const [currentView, setCurrentView] = useState<ViewType>('dashboard')
-  const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
-=======
 const ProjectManagement = lazy(() => import('./components/ProjectManagement'));
 const AdvancedAnalytics = lazy(() => import('./components/analytics/AdvancedAnalytics'));
 const ReportGenerator = lazy(() => import('./components/reports/ReportGenerator'));
@@ -42,17 +19,19 @@ const AIInsights = lazy(() => import('./components/ai/AIInsights'));
 
 type ViewType = 'dashboard' | 'vulnerabilities' | 'chat' | 'integrations' | 'code-explorer' | 'projects' | 'analytics' | 'reports' | 'monitoring' | 'enterprise' | 'ai-insights'
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 function MainApp() {
   const [currentView, setCurrentView] = useState<ViewType>('dashboard')
-  const [loading, setLoading] = useState(true)
->>>>>>> Stashed changes
+  const [analysisData, setAnalysisData] = useState<unknown | null>(null);
+  const [loading, setLoading] = useState(true);
   const [paletteOpen, setPaletteOpen] = useState(false)
   const { user, loading: authLoading } = useAuth()
 
   useEffect(() => {
     const fetchAnalysisData = async () => {
       try {
-        const response = await fetch('http://localhost:8000/start-analysis', {
+        const response = await fetch(`${API_URL}/start-analysis`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -67,8 +46,8 @@ function MainApp() {
         }
         const data = await response.json();
         setAnalysisData(data);
-      } catch (err) {
-        setError(err.message);
+      } catch (err: unknown) {
+        console.error((err as Error).message);
       } finally {
         setLoading(false);
       }
@@ -89,15 +68,6 @@ function MainApp() {
   }, [])
 
   const renderMainContent = () => {
-<<<<<<< Updated upstream
-    if (loading) return <div className="p-6 space-y-4"><div className="h-32 skeleton rounded"/><div className="h-64 skeleton rounded"/></div>
-    if (error) return <div className="h-full flex items-center justify-center text-danger">{error}</div>;
-    if (!analysisData) return <div className="h-full flex items-center justify-center text-white">No analysis data found.</div>;
-
-    switch (currentView) {
-      case 'dashboard':
-        return <DashboardView analysisData={analysisData} />
-=======
     if (loading || authLoading) {
       return (
         <div className="h-full flex items-center justify-center gradient-bg">
@@ -115,17 +85,9 @@ function MainApp() {
         return <DashboardView />
       case 'projects':
         return <ProjectManagement />
->>>>>>> Stashed changes
       case 'vulnerabilities':
         return <DashboardView analysisData={analysisData} />
       case 'chat':
-<<<<<<< Updated upstream
-        return <ChatPanel repo_path={analysisData.repo_path} />
-      case 'integrations':
-        return <IntegrationsView />
-      case 'code-explorer':
-        return <CodeExplorerView analysisData={analysisData} />
-=======
         return <ChatPanel repoPath="/tmp/mock-repo" analysisData={mockAnalysisData} />
       case 'analytics':
         return <AdvancedAnalytics />
@@ -141,7 +103,6 @@ function MainApp() {
         return <IntegrationsView />
       case 'code-explorer':
         return <CodeExplorerView analysisData={mockAnalysisData} />
->>>>>>> Stashed changes
       default:
         return <DashboardView analysisData={analysisData} />
     }

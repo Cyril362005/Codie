@@ -1,14 +1,7 @@
 # This Dockerfile will be used for all services
 FROM python:3.11-slim
 
-# Install git, Java for Diffblue, Maven, and other tools
-RUN apt-get update && apt-get install -y \
-    git \
-    openjdk-17-jdk \
-    maven \
-    wget \
-    unzip \
-    && rm -rf /var/lib/apt/lists/*
+# Set the Python path to include the root app directory.
 
 # Download and install Diffblue Cover CLI
 RUN wget https://release.diffblue.com/cli/latest -O /tmp/dcover.zip && \

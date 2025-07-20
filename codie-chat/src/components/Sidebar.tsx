@@ -5,21 +5,13 @@ import ShieldIcon from './icons/ShieldIcon'
 import { HiChat, HiOutlinePuzzle, HiOutlineCog, HiOutlineBell } from 'react-icons/hi'
 import { FiUser, FiLogOut, FiGitBranch, FiActivity, FiFileText, FiUsers, FiSearch } from 'react-icons/fi'
 import ProjectSelector from './ProjectSelector'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/useAuth'
 
-<<<<<<< Updated upstream
-type ViewType = 'dashboard' | 'vulnerabilities' | 'chat' | 'integrations' | 'code-explorer'
-
-interface SidebarProps {
-  currentView: string
-  onViewChange: (view: 'dashboard' | 'vulnerabilities' | 'chat' | 'integrations' | 'code-explorer') => void
-=======
 type ViewType = 'dashboard' | 'vulnerabilities' | 'chat' | 'integrations' | 'code-explorer' | 'projects' | 'analytics' | 'reports' | 'monitoring' | 'enterprise' | 'ai-insights'
 
 interface SidebarProps {
   currentView: string
   onViewChange: (view: 'dashboard' | 'vulnerabilities' | 'chat' | 'integrations' | 'code-explorer' | 'projects' | 'analytics' | 'reports' | 'monitoring' | 'enterprise' | 'ai-insights') => void
->>>>>>> Stashed changes
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
@@ -27,13 +19,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
   const { user, logout } = useAuth()
   
   const menuItems = [
-<<<<<<< Updated upstream
-    { id: 'dashboard', label: 'Dashboard', icon: DashboardIcon, notify: 0 },
-    { id: 'vulnerabilities', label: 'Vulnerabilities', icon: ShieldIcon, notify: 3 },
-    { id: 'code-explorer', label: 'Code Explorer', icon: CodeIcon, notify: 0 },
-    { id: 'chat', label: 'AI Chat', icon: HiChat, notify: 1 },
-    { id: 'integrations', label: 'Integrations', icon: HiOutlinePuzzle, notify: 0 },
-=======
     { 
       id: 'dashboard', 
       label: 'Dashboard', 
@@ -111,7 +96,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
       notify: 0,
       description: 'Third-party integrations'
     },
->>>>>>> Stashed changes
   ]
 
   return (

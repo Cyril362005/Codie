@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FiPlus, FiGitBranch, FiClock, FiCheckCircle, FiAlertCircle, FiTrash2, FiEdit2 } from 'react-icons/fi';
-// import { useAuth } from '../contexts/AuthContext';
+// import { useAuth } from '../contexts/useAuth';
 
 interface Project {
   id: number;

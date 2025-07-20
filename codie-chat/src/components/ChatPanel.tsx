@@ -1,14 +1,9 @@
-<<<<<<< Updated upstream
-import React, { useState } from 'react';
-import { FiCopy, FiThumbsUp, FiThumbsDown, FiZap } from 'react-icons/fi';
-=======
 import React, { useState, useRef, useEffect } from 'react';
 import { FiCopy, FiThumbsUp, FiThumbsDown, FiCheck, FiEye, FiSend, FiMessageSquare } from 'react-icons/fi';
->>>>>>> Stashed changes
 import CodePreview from './CodePreview';
 import ReactDiffViewer from 'react-diff-viewer';
 import { chatAPI, analysisAPI } from '../services/api';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/useAuth';
 
 interface Message {
   id: number;
@@ -19,16 +14,6 @@ interface Message {
     thumbsDown: number;
   };
   code?: string;
-<<<<<<< Updated upstream
-  file_path?: string;
-}
-
-interface ChatPanelProps {
-  repo_path: string;
-}
-
-const ChatPanel: React.FC<ChatPanelProps> = ({ repo_path }) => {
-=======
   filePath?: string;
   originalCode?: string;
   timestamp: Date;
@@ -43,11 +28,10 @@ interface ChatResponse {
 
 interface ChatPanelProps {
   repoPath?: string;
-  analysisData?: any;
+  analysisData?: Record<string, unknown>;
 }
 
 const ChatPanel: React.FC<ChatPanelProps> = ({ repoPath, analysisData }) => {
->>>>>>> Stashed changes
   const [messages, setMessages] = useState<Message[]>([
     { 
       id: 1, 
@@ -59,7 +43,6 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ repoPath, analysisData }) => {
       id: 2,
       text: "I found a critical SQL injection vulnerability in your login function. Here's the fix:",
       from: 'ai',
-      file_path: 'src/vulnerable.js',
       code: `
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
@@ -79,7 +62,7 @@ app.post('/login', (req, res) => {
       originalCode: `
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
-  const query = \`SELECT * FROM users WHERE username = '\${username}' AND password = '\${password}'\`;
+  const query = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;
   db.query(query, (err, results) => {
     if (err) throw err;
     if (results.length > 0) {
@@ -237,28 +220,7 @@ app.post('/login', (req, res) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const applyFix = async (file_path: string, new_code: string) => {
-    try {
-      const response = await fetch('http://localhost:8000/api/v1/apply-fix', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          repo_path,
-          file_path,
-          new_code,
-        }),
-      });
-      if (!response.ok) {
-        throw new Error('Failed to apply fix');
-      }
-      // You could add a success message to the chat here
-    } catch (error) {
-      console.error(error);
-      // You could add an error message to the chat here
-    }
-  };
+  
 
   return (
     <div className="flex flex-col h-full bg-gradient-bg">
@@ -401,17 +363,7 @@ app.post('/login', (req, res) => {
                 </div>
               )}
             </div>
-<<<<<<< Updated upstream
-            {m.from === 'ai' && (
-              <div className="flex items-center space-x-sm mt-sm">
-                <button onClick={() => handleReaction(m.id, 'thumbsUp')} className="text-gray-400 hover:text-success"><FiThumbsUp /></button>
-                <button onClick={() => handleReaction(m.id, 'thumbsDown')} className="text-gray-400 hover:text-danger"><FiThumbsDown /></button>
-                {m.code && <button onClick={() => copyToClipboard(m.code!)} className="text-gray-400 hover:text-accent"><FiCopy /></button>}
-                {m.code && m.file_path && <button onClick={() => applyFix(m.file_path!, m.code!)} className="text-gray-400 hover:text-accent"><FiZap /></button>}
-              </div>
-            )}
-=======
->>>>>>> Stashed changes
+
           </div>
         ))}
         

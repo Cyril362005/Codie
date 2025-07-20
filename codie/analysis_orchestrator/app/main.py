@@ -43,15 +43,6 @@ class ApplyFixPayload(BaseModel):
     file_path: str
     new_code: str
 
-class FullAnalysisResult(BaseModel):
-    hotspots: Dict[str, int]
-    complexity_reports: Dict[str, Any]
-    vulnerabilities: List[Dict]
-    code_coverage_percentage: Optional[float] = None
-    top_refactoring_candidate: Dict[str, Any]
-    file_contents: Dict[str, str]
-    repo_path: str
-
 # --- Pydantic Schemas ---
 class FullAnalysisResult(BaseModel):
     hotspots: Dict[str, int]
@@ -85,7 +76,7 @@ class ReportResponse(BaseModel):
 
 # --- Asynchronous Snyk API Client ---
 class SnykCodeAPI:
-    def __init__(self, token: str, org_id: str, base_url: str = "https://api.snyk.io"):
+    def __init__(self, token: str, org_id: str, base_url: str = os.getenv("SNYK_API_URL", "https://api.snyk.io")):
         self.token = token
         self.org_id = org_id
         self.base_url = base_url.rstrip('/')
@@ -186,98 +177,26 @@ async def start_analysis(payload: AnalysisPayload):
             snyk_api = SnykCodeAPI(token=snyk_token, org_id=snyk_org_id)
             vulnerabilities = await snyk_api.scan_directory(temp_dir)
         
-        # Mock data for other analysis results
-        hotspots = defaultdict(int)
-        for vuln in vulnerabilities:
-            hotspots[vuln.file_path] += 1
+        # Mock code coverage data (if not obtained from a real tool)
+        code_coverage_percentage = 78.5 # Placeholder if no real coverage tool is integrated
         
-<<<<<<< Updated upstream
-        complexity_reports = {
-            "src/utils/file_processor.py": {"complexity": 12, "function_lengths": [25, 15]},
-            "src/config.py": {"complexity": 2, "function_lengths": []}
-        }
-=======
-        # --- Collect File Contents ---
-        file_contents = {}
-        for root, dirs, files in os.walk(temp_dir):
-            for file in files:
-                if file.endswith(('.py', '.js', '.ts', '.tsx', '.jsx', '.java', '.cpp', '.c', '.h', '.hpp')):
-                    file_path = os.path.join(root, file)
-                    rel_path = os.path.relpath(file_path, temp_dir)
-                    try:
-                        with open(file_path, 'r', encoding='utf-8') as f:
-                            file_contents[rel_path] = f.read()
-                    except Exception as e:
-                        logger.warning(f"Could not read file {rel_path}: {e}")
-        
-        # --- Generate Mock Analysis Data ---
-        hotspots = {
-            "src/utils/file_processor.py": 15,
-            "src/config.py": 8,
-            "src/api/routes.py": 12,
-            "src/database/models.py": 6
-        }
-        
-        complexity_reports = {
-            "src/utils/file_processor.py": {
-                "cyclomatic_complexity": 15,
-                "cognitive_complexity": 12,
-                "maintainability_index": 45
-            },
-            "src/config.py": {
-                "cyclomatic_complexity": 8,
-                "cognitive_complexity": 6,
-                "maintainability_index": 65
+        # Determine top refactoring candidate (mocked for now)
+        top_refactoring_candidate = {"file": "N/A", "score": 0.0}
+        if complexity_reports:
+            # Example: find file with highest cyclomatic complexity
+            top_candidate_file = max(complexity_reports, key=lambda k: complexity_reports[k].get("cyclomatic_complexity", 0))
+            top_refactoring_candidate = {
+                "file": top_candidate_file,
+                "score": complexity_reports[top_candidate_file].get("cyclomatic_complexity", 0)
             }
-        }
-        
-        # Mock code coverage data
-        code_coverage_percentage = 78.5
-        
-        # Determine top refactoring candidate
-        top_candidate_file = "src/utils/file_processor.py"
-        top_score = complexity_reports[top_candidate_file]["cyclomatic_complexity"]
-        
-        # --- Synthesize Final Summary ---
-        summary = "I've finished analyzing your project. "
->>>>>>> Stashed changes
-        
-        code_coverage_percentage = 85.5
-        
-        top_candidate_file = "src/utils/file_processor.py"
-        top_score = 0.95
-        
-        file_contents = {}
-        for root, _, files in os.walk(temp_dir):
-            for file in files:
-                if not ".git" in root:
-                    try:
-                        file_path = Path(root) / file
-                        relative_path = file_path.relative_to(temp_dir)
-                        file_contents[str(relative_path)] = file_path.read_text()
-                    except Exception:
-                        # Ignore files that can't be read
-                        pass
 
         return {
-<<<<<<< Updated upstream
-            "hotspots": dict(hotspots),
-=======
             "hotspots": hotspots,
->>>>>>> Stashed changes
             "complexity_reports": complexity_reports,
             "vulnerabilities": [vars(v) for v in vulnerabilities],
             "code_coverage_percentage": code_coverage_percentage,
-            "top_refactoring_candidate": {
-                "file": top_candidate_file,
-                "score": top_score
-            },
-<<<<<<< Updated upstream
-            "file_contents": file_contents,
-            "repo_path": temp_dir
-=======
+            "top_refactoring_candidate": top_refactoring_candidate,
             "file_contents": file_contents
->>>>>>> Stashed changes
         }
     
     except Exception as e:
@@ -289,28 +208,6 @@ async def start_analysis(payload: AnalysisPayload):
         shutil.rmtree(temp_dir, ignore_errors=True)
         logger.info(f"Cleaned up temporary directory: {temp_dir}")
 
-<<<<<<< Updated upstream
-@app.post("/api/v1/apply-fix")
-async def apply_fix(payload: ApplyFixPayload):
-    """
-    Applies a fix to a file in a cloned repository.
-    """
-    try:
-        # Sanitize the file path to prevent directory traversal
-        repo_path = Path(payload.repo_path).resolve()
-        file_path = (repo_path / payload.file_path).resolve()
-
-        if not file_path.is_relative_to(repo_path):
-            raise HTTPException(status_code=400, detail="Invalid file path")
-
-        with open(file_path, "w") as f:
-            f.write(payload.new_code)
-
-        return {"status": "success", "message": f"Successfully applied fix to {payload.file_path}"}
-    except Exception as e:
-        logger.error(f"An error occurred while applying fix: {e}")
-        raise HTTPException(status_code=500, detail="An internal error occurred while applying fix.")
-=======
 @app.post("/api/v1/apply-fix", response_model=ApplyFixResponse)
 async def apply_fix(request: ApplyFixRequest):
     """
@@ -409,4 +306,3 @@ async def download_report(report_id: str):
     except Exception as e:
         logger.error(f"Failed to download report {report_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to download report: {str(e)}")
->>>>>>> Stashed changes

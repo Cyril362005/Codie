@@ -29,7 +29,7 @@ const getHeaders = (token?: string) => {
 const apiRequest = async <T>(
   url: string,
   options: RequestInit = {}
-): Promise<T> => {
+): Promise<{ data: T | null; error: string | null }> => {
   try {
     const response = await fetch(url, {
       ...options,
@@ -40,13 +40,15 @@ const apiRequest = async <T>(
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorData = await response.json();
+      return { data: null, error: errorData.detail || `HTTP error! status: ${response.status}` };
     }
 
-    return await response.json();
+    const data = await response.json();
+    return { data, error: null };
   } catch (error) {
     console.error('API request failed:', error);
-    throw error;
+    return { data: null, error: (error as Error).message };
   }
 };
 
@@ -145,7 +147,7 @@ export const chatAPI = {
   sendMessage: async (data: {
     message: string;
     chat_id: string;
-    context?: any;
+    context?: Record<string, unknown>;
     token?: string;
   }) => {
     return apiRequest(`${CHAT_URL}/send-message`, {
@@ -244,7 +246,7 @@ export const cacheAPI = {
   },
 
   // Set cached data
-  set: async (data: { key: string; value: any; ttl?: number; token?: string }) => {
+  set: async (data: { key: string; value: unknown; ttl?: number; token?: string }) => {
     return apiRequest(`${CACHE_URL}/set`, {
       method: 'POST',
       body: JSON.stringify(data),
