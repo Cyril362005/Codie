@@ -1,3 +1,5 @@
+const colors = require('tailwindcss/colors')
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -27,7 +29,30 @@ export default {
         '2xl': '24px',
       },
       colors: {
-        // Modern color palette inspired by top AI platforms
+        // Keep all default Tailwind colors including gray
+        gray: colors.gray,
+        slate: colors.slate,
+        zinc: colors.zinc,
+        neutral: colors.neutral,
+        stone: colors.stone,
+        red: colors.red,
+        orange: colors.orange,
+        amber: colors.amber,
+        yellow: colors.yellow,
+        lime: colors.lime,
+        green: colors.green,
+        emerald: colors.emerald,
+        teal: colors.teal,
+        cyan: colors.cyan,
+        sky: colors.sky,
+        blue: colors.blue,
+        indigo: colors.indigo,
+        violet: colors.violet,
+        purple: colors.purple,
+        fuchsia: colors.fuchsia,
+        pink: colors.pink,
+        rose: colors.rose,
+        // Custom color palette inspired by top AI platforms
         primary: {
           50: '#eff6ff',
           100: '#dbeafe',
