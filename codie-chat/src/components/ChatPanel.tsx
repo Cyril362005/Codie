@@ -62,7 +62,7 @@ app.post('/login', (req, res) => {
       originalCode: `
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
-  const query = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;
+  const query = \`SELECT * FROM users WHERE username = '\${username}' AND password = '\${password}'\`;
   db.query(query, (err, results) => {
     if (err) throw err;
     if (results.length > 0) {
@@ -107,12 +107,14 @@ app.post('/login', (req, res) => {
     
     try {
       // Send message to chat service
-      const response = await chatAPI.sendMessage({
+      const apiResponse = await chatAPI.sendMessage({
         message: input,
         chat_id: 'demo-chat-123',
         context: analysisData,
         token: token || undefined
-      }) as ChatResponse;
+      });
+      
+      const response = (apiResponse.data || {}) as ChatResponse;
       
       // Add AI response
       const aiMessage: Message = {

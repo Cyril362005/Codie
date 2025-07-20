@@ -5,14 +5,19 @@ import { FiRefreshCw, FiPlus, FiTrendingUp, FiTrendingDown, FiShield, FiCode, Fi
 import { analysisAPI, monitoringAPI } from '../services/api'
 import { useAuth } from '../contexts/useAuth'
 
-import { AnalysisData } from '../types';
+import type { AnalysisData } from '../types';
+
+interface SystemHealth {
+  status: 'healthy' | 'degraded' | 'down';
+  [key: string]: unknown;
+}
 
 const DashboardView: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null)
   const [progress, setProgress] = useState(0)
-  const [systemHealth, setSystemHealth] = useState<unknown | null>(null)
+  const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null)
   const { token } = useAuth()
 
   useEffect(() => {
@@ -28,8 +33,10 @@ const DashboardView: React.FC = () => {
 
         // Fetch system health
         try {
-          const health = await monitoringAPI.getHealth(token || undefined)
-          setSystemHealth(health)
+          const healthResponse = await monitoringAPI.getHealth(token || undefined)
+          if (healthResponse.data && !healthResponse.error) {
+            setSystemHealth(healthResponse.data as SystemHealth)
+          }
         } catch (healthError) {
           console.warn('Failed to fetch system health:', healthError)
         }
@@ -44,7 +51,11 @@ const DashboardView: React.FC = () => {
         clearInterval(progressInterval)
         setProgress(100)
 
-        setAnalysisData(response as AnalysisData)
+        if (response.data && !response.error) {
+          setAnalysisData(response.data as AnalysisData)
+        } else {
+          throw new Error(response.error || 'Failed to get analysis data')
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch analysis data')
         console.error('Error fetching analysis data:', err)
@@ -71,7 +82,11 @@ const DashboardView: React.FC = () => {
           token: token || undefined
         })
 
-        setAnalysisData(response as AnalysisData)
+        if (response.data && !response.error) {
+          setAnalysisData(response.data as AnalysisData)
+        } else {
+          throw new Error(response.error || 'Failed to get analysis data')
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch analysis data')
       } finally {

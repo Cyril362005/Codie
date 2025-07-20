@@ -1,91 +1,126 @@
-import React, { useState, useEffect } from 'react';
-import type { ReactNode } from 'react';
-import { authAPI } from '../services/api';
-import { AuthContext } from './AuthContext';
-
-interface User {
-  id: number;
-  email: string;
-  username: string;
-  is_active: boolean;
-  created_at: string;
-}
-
-export interface AuthContextType {
-  user: User | null;
-  token: string | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (email: string, username: string, password: string) => Promise<boolean>;
-  logout: () => void;
-  loading: boolean;
-  error: string | null;
-}
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import type { ReactNode } from 'react'
+import { authAPI } from '../services/api'
+import { AuthContext, type AuthContextType } from './AuthContext'
+import type { User } from '../types'
 
 interface AuthProviderProps {
-  children: ReactNode;
+  children: ReactNode
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// Constants for token storage
+const TOKEN_KEY = 'codie_auth_token'
+const TOKEN_EXPIRY_KEY = 'codie_token_expiry'
 
-  // For development, if there's a token but no backend, create a mock user
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development' && token && !user) {
-      const mockUser = {
-        id: 1,
-        email: 'demo@codie.com',
-        username: 'demo_user',
-        is_active: true,
-        created_at: new Date().toISOString()
-      };
-      setUser(mockUser);
-      setLoading(false);
+/**
+ * Authentication provider component that manages user authentication state
+ */
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  // Initialize token from storage with expiry check
+  const getStoredToken = useCallback((): string | null => {
+    try {
+      const storedToken = localStorage.getItem(TOKEN_KEY)
+      const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY)
+      
+      if (storedToken && expiry) {
+        const expiryTime = parseInt(expiry, 10)
+        if (Date.now() < expiryTime) {
+          return storedToken
+        }
+        // Token expired, clean up
+        localStorage.removeItem(TOKEN_KEY)
+        localStorage.removeItem(TOKEN_EXPIRY_KEY)
+      }
+    } catch (error) {
+      // Handle storage errors (e.g., when localStorage is disabled)
+      console.error('Failed to access localStorage:', error)
     }
-  }, [token, user]);
+    return null
+  }, [])
+
+  const [user, setUser] = useState<User | null>(null)
+  const [token, setToken] = useState<string | null>(getStoredToken())
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Create mock user for development
+  const createMockUser = useCallback((email?: string): User => ({
+    id: '1',
+    email: email || 'demo@codie.com',
+    name: email ? email.split('@')[0] : 'Demo User',
+    role: 'developer',
+    created_at: new Date().toISOString()
+  }), [])
+
+  // Store token with expiry
+  const storeToken = useCallback((newToken: string, expiryHours = 24) => {
+    try {
+      const expiryTime = Date.now() + (expiryHours * 60 * 60 * 1000)
+      localStorage.setItem(TOKEN_KEY, newToken)
+      localStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString())
+      setToken(newToken)
+    } catch (error) {
+      console.error('Failed to store token:', error)
+    }
+  }, [])
+
+  const clearToken = useCallback(() => {
+    try {
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(TOKEN_EXPIRY_KEY)
+    } catch (error) {
+      console.error('Failed to clear token:', error)
+    }
+    setToken(null)
+  }, [])
 
   // Check if user is authenticated on app load
   useEffect(() => {
+    let isMounted = true
+    
     const checkAuth = async () => {
-      if (token) {
-        try {
-          const { data, error: checkError } = await authAPI.verifyToken(token);
-          
-          if (data) {
-            setUser(data as User);
-          } else {
-            // Token is invalid, clear it
-            localStorage.removeItem('token');
-            setToken(null);
-            if (checkError) {
-              setError(checkError);
-            }
-          }
-        } catch {
-          console.error('Auth check failed:');
-          // For development, if backend is not available, create a mock user
-          if (process.env.NODE_ENV === 'development') {
-            const mockUser = {
-              id: 1,
-              email: 'demo@codie.com',
-              username: 'demo_user',
-              is_active: true,
-              created_at: new Date().toISOString()
-            };
-            setUser(mockUser);
-          } else {
-            localStorage.removeItem('token');
-            setToken(null);
+      if (!token) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        const { data, error: checkError } = await authAPI.verifyToken(token)
+        
+        if (!isMounted) return
+        
+        if (data) {
+          setUser(data as User)
+        } else {
+          clearToken()
+          if (checkError) {
+            setError(checkError)
           }
         }
+      } catch (error) {
+        if (!isMounted) return
+        
+        // For development, if backend is not available, create a mock user
+        if (import.meta.env.DEV) {
+          setUser(createMockUser())
+        } else {
+          clearToken()
+          setError('Authentication failed. Please login again.')
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
       }
-      setLoading(false);
-    };
+    }
 
-    checkAuth();
-  }, [token]);
+    checkAuth()
+    
+    return () => {
+      isMounted = false
+    }
+  }, [token, clearToken, createMockUser]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setLoading(true);

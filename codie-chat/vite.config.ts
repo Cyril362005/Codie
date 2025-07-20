@@ -1,9 +1,19 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { visualizer } from 'rollup-plugin-visualizer'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    // Bundle analyzer plugin (only in build mode)
+    process.env.ANALYZE && visualizer({
+      filename: 'reports/bundle-analysis.html',
+      open: true,
+      gzipSize: true,
+      brotliSize: true
+    })
+  ].filter(Boolean),
   base: '/',
   server: {
     port: 3000,

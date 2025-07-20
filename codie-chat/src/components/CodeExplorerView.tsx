@@ -30,8 +30,10 @@ interface CodeExplorerViewProps {
 const CodeExplorerView: React.FC<CodeExplorerViewProps> = ({ analysisData }) => {
   const [selectedFile, setSelectedFile] = useState(analysisData.top_refactoring_candidate.file);
 
+  type FileTreeNode = Record<string, FileTreeNode | null> | null;
+
   const fileTree = useMemo(() => {
-    const tree: Record<string, unknown> = {};
+    const tree: Record<string, FileTreeNode> = {};
     Object.keys(analysisData.file_contents).forEach(path => {
       let currentLevel = tree;
       const parts = path.split('/');
@@ -39,13 +41,15 @@ const CodeExplorerView: React.FC<CodeExplorerViewProps> = ({ analysisData }) => 
         if (!currentLevel[part]) {
           currentLevel[part] = (index === parts.length - 1) ? null : {};
         }
-        currentLevel = currentLevel[part];
+        if (currentLevel[part] !== null) {
+          currentLevel = currentLevel[part] as Record<string, FileTreeNode>;
+        }
       });
     });
     return tree;
   }, [analysisData.file_contents]);
 
-  const renderFileTree = (tree: Record<string, unknown>, path = '') => {
+  const renderFileTree = (tree: Record<string, FileTreeNode>, path = '') => {
     return (
       <ul className="space-y-1">
         {Object.entries(tree).map(([name, children]) => {

@@ -6,8 +6,16 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:analyze": "npm run build && vite-bundle-analyzer dist/assets/*.js",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "lint:report": "eslint . --format json --output-file reports/eslint-report.json",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "test:ui": "vitest --ui",
+    "lighthouse": "lhci autorun",
+    "perf:baseline": "npm run build && npm run lighthouse && npm run build:analyze",
+    "security:audit": "npm audit --audit-level=moderate --json > reports/npm-audit.json"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -35,6 +43,17 @@
     "tailwindcss": "^4.1.11",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.35.1",
-    "vite": "^7.0.4"
+    "vite": "^7.0.4",
+    "@lighthouse-ci/cli": "^0.12.0",
+    "vitest": "^2.1.8",
+    "@vitest/coverage-v8": "^2.1.8",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/user-event": "^14.5.2",
+    "jsdom": "^26.0.1",
+    "rollup-plugin-analyzer": "^4.0.0",
+    "rollup-plugin-visualizer": "^5.12.0",
+    "vite-bundle-analyzer": "^0.18.0",
+    "@types/node": "^22.10.3"
   }
 }
